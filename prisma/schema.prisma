@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          String    @default("staff") // admin, manager, staff
+  status        String    @default("active") // active, inactive
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  pointOfSaleId String?
+  pointOfSale   PointOfSale? @relation(fields: [pointOfSaleId], references: [id])
+  managedPointsOfSale PointOfSale[] @relation("PointOfSaleManager")
+}
+
+model PointOfSale {
+  id            String    @id @default(cuid())
+  name          String
+  address       String
+  phone         String
+  logo          String?
+  status        String    @default("active") // active, inactive
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  managerId     String?
+  manager       User?     @relation("PointOfSaleManager", fields: [managerId], references: [id])
+  users         User[]
+  products      Product[]
+  customers     Customer[]
+  orders        Order[]
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  name          String
+  sku           String
+  price         Float
+  quantity      Int
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  pointOfSaleId String
+  pointOfSale   PointOfSale @relation(fields: [pointOfSaleId], references: [id])
+  variations    ProductVariation[]
+  orderItems    OrderItem[]
+}
+
+model ProductVariation {
+  id            String    @id @default(cuid())
+  name          String
+  sku           String
+  quantity      Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  city          String
+  address       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  pointOfSaleId String
+  pointOfSale   PointOfSale @relation(fields: [pointOfSaleId], references: [id])
+  orders        Order[]
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
+  subtotal      Float
+  discount      Float     @default(0)
+  discountType  String    @default("fixed") // fixed, percentage
+  tax           Float
+  total         Float
+  status        String    @default("pending") // pending, processing, shipped, delivered
+  deliveryNotes String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  pointOfSaleId String
+  pointOfSale   PointOfSale @relation(fields: [pointOfSaleId], references: [id])
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id                String    @id @default(cuid())
+  quantity          Int
+  price             Float
+  total             Float
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product   @relation(fields: [productId], references: [id])
+  productVariationId String
+  productVariation  ProductVariation @relation(fields: [productVariationId], references: [id])
+}
+
+model SystemSettings {
+  id            String    @id @default(cuid())
+  companyName   String    @default("My Company")
+  taxId         String?
+  address       String?
+  phone         String?
+  currency      String    @default("USD")
+  taxRate       Float     @default(0.05)
+  darkMode      Boolean   @default(false)
+  emailNotifications Boolean @default(true)
+  autoBackup    Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
