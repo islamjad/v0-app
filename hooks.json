@@ -1,0 +1,17 @@
+[
+  {
+    "id": "deploy",
+    "execute-command": "./deploy.sh",
+    "command-working-directory": "/v0-app",
+    "trigger-rule": {
+      "match": {
+        "type": "value",
+        "value": "refs/heads/master",
+        "parameter": {
+          "source": "payload",
+          "name": "ref"
+        }
+      }
+    }
+  }
+]
